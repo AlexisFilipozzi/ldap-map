@@ -1,0 +1,18 @@
+--- 
+bind:
+    name: "cn=admin, dc=centralesupelec, dc=fr"
+    password: XXXXX
+    address: localhost
+
+postmap_cmd: /usr/sbin/postmap
+
+
+map:
+- file: "login2name-student-ecp"
+  filter: "(&(objectClass=person)(mail=*@student.ecp.fr))"
+  template: "${supannAliasLogin}@student.ecp.fr\t\t${mail}"
+  baseDN: "ou=people,dc=centralesupelec,dc=fr"
+- file: "login2name-centralesupelec"
+  filter: "(&(objectClass=person)(mail=*@centralesupelec.fr))"
+  template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
+  baseDN: "ou=people,dc=centralesupelec,dc=fr"
