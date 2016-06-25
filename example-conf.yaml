@@ -6,7 +6,6 @@ bind:
 
 postmap_cmd: /usr/sbin/postmap
 
-
 map:
 - file: "login2name-student-ecp"
   filter: "(&(objectClass=person)(mail=*@student.ecp.fr))"
@@ -15,4 +14,5 @@ map:
 - file: "login2name-centralesupelec"
   filter: "(&(objectClass=person)(mail=*@centralesupelec.fr))"
   template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
+  result_filter_template: "contains(${mailLocalAddress}, @test.fr)"
   baseDN: "ou=people,dc=centralesupelec,dc=fr"

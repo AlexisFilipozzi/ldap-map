@@ -6,6 +6,7 @@ from yaml import load
 import sys
 import yaml
 from subprocess import call
+from predicate_evaluator import PredicateEvaluator
 
 def attribute_from_template_string(template_string):
 	return re.findall(r"\$\{?(\w+)\}?", template_string)
@@ -70,10 +71,12 @@ class NoAttributeException(Exception):
 
 
 class Generator:
-	def __init__(self, filename, template):
+	def __init__(self, filename, template, result_filter_template):
 		self._map_name = filename
 		self._template_string = template
 		self._template = Template(self._template_string)
+		self._result_filter_template_string = result_filter_template
+		self._result_filter_template = Template(self._result_filter_template_string)
 		self._attributes = []
 		self._data = []
 		self._set_attributes_from_template()
@@ -85,7 +88,11 @@ class Generator:
 		match = attribute_from_template_string(self._template_string)
 		if not match:
 			raise NoAttributeException(self._map_name, self._template_string)
-		self._attributes = match
+		result = match
+		match_result_filter = attribute_from_template_string(self._result_filter_template_string)
+		if match_result_filter:
+			result += match_result_filter
+		self._attributes = result
 
 	def generate(self, postmap_cmd):
 		with open(self._map_name, "w") as f:
@@ -98,8 +105,19 @@ class Generator:
 
 	def generate_for_one_entry_to_string(self, f, template_value):
 		try:
-			to_append = self._template.substitute(template_value)
-			f.write(str(to_append) + "\n")
+			# we first verify that we have to add this line
+			append = True
+			if self._result_filter_template_string:
+				# we have to filter the result
+				result_predicate = self._result_filter_template.substitute(template_value)
+				evaluator = PredicateEvaluator(result_predicate)
+				if not evaluator.eval_predicate():
+					# the predicate is False, don't append
+					append = False
+
+			if append:
+				to_append = self._template.substitute(template_value)
+				f.write(str(to_append) + "\n")
 		except KeyError:
 			pass
 
@@ -130,7 +148,7 @@ class Main:
 		for map_conf in conf["map"]:
 			ldap_reader = LDAPReader(bind, map_conf["baseDN"], map_conf["filter"], attribute_from_template_string(map_conf["template"]))
 			ldap_reader.read()
-			generator = Generator(map_conf["file"], map_conf["template"])
+			generator = Generator(map_conf["file"], map_conf["template"], map_conf["result_filter_template"] if "result_filter_template" in map_conf else "")
 			data = ldap_reader.get_list_dict_from_result()
 			generator.set_data(data)
 			generator.generate(conf["postmap_cmd"])
