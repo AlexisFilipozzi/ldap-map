@@ -11,20 +11,26 @@ from predicate_evaluator import PredicateEvaluator
 def attribute_from_template_string(template_string):
 	return re.findall(r"\$\{?(\w+)\}?", template_string)
 
-def to_flat_dict(d):
+def to_flat_dict(d, key_to_flat):
 	# generator:
-	# if the input dict has a list value, we return a generator
-	# on which we can iterate to get all possible dict where values are not list
-	# otherwise we can iterate only on the input dict
+	# if the input dict has a list value and the corresponding key is in key_to_list,
+	# we return a generator on which we can iterate to get all possible dict where 
+	# values are not list otherwise we can iterate only on the input dict
+	#
+	# if key_to_flat is None, all keys are in key_to_flat
 	copy = d.copy()
+	if key_to_flat is None:
+		key_to_flat = list(d.keys())
+
 	has_no_list = True
 	for (key, val) in d.items():
-		if isinstance(val, list):
-			has_no_list = False
-			for el in val:
-				copy[key] = el
-				yield from to_flat_dict(copy) 
-			break
+		if key in key_to_flat:
+			if isinstance(val, list):
+				has_no_list = False
+				for el in val:
+					copy[key] = el
+					yield from to_flat_dict(copy, key_to_flat) 
+				break
 	if has_no_list:
 		yield copy
 
@@ -71,15 +77,16 @@ class NoAttributeException(Exception):
 
 
 class Generator:
-	def __init__(self, filename, template, result_filter_template):
-		self._map_name = filename
-		self._template_string = template
+	def __init__(self, map_conf):
+		self._map_name = map_conf["file"]
+		self._template_string = map_conf["template"]
 		self._template = Template(self._template_string)
-		self._result_filter_template_string = result_filter_template
+		self._result_filter_template_string = map_conf["result_filter_template"] if "result_filter_template" in map_conf else ""
 		self._result_filter_template = Template(self._result_filter_template_string)
 		self._attributes = []
 		self._data = []
 		self._set_attributes_from_template()
+		self._keys = map_conf["keys"] if "keys" in map_conf else None
 
 	def set_data(self, data):
 		self._data = data
@@ -99,7 +106,7 @@ class Generator:
 			for entry in self._data:
 				template_value = {}
 				valid = True
-				for flat_dict in to_flat_dict(entry):
+				for flat_dict in to_flat_dict(entry, self._keys):
 					self.generate_for_one_entry_to_string(f, flat_dict)
 		call([postmap_cmd, self._map_name])
 
@@ -116,7 +123,13 @@ class Generator:
 					append = False
 
 			if append:
-				to_append = self._template.substitute(template_value)
+				template_value_no_list = {}
+				for (key, val) in template_value.items():
+					if isinstance(val, list):
+						template_value_no_list[key] = ", ".join(val)
+					else:
+						template_value_no_list[key] = val
+				to_append = self._template.substitute(template_value_no_list)
 				f.write(str(to_append) + "\n")
 		except KeyError:
 			pass
@@ -148,7 +161,7 @@ class Main:
 		for map_conf in conf["map"]:
 			ldap_reader = LDAPReader(bind, map_conf["baseDN"], map_conf["filter"], attribute_from_template_string(map_conf["template"]))
 			ldap_reader.read()
-			generator = Generator(map_conf["file"], map_conf["template"], map_conf["result_filter_template"] if "result_filter_template" in map_conf else "")
+			generator = Generator(map_conf)
 			data = ldap_reader.get_list_dict_from_result()
 			generator.set_data(data)
 			generator.generate(conf["postmap_cmd"])
