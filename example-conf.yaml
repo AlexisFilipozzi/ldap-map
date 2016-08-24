@@ -1,7 +1,7 @@
 --- 
 bind:
-    name: "cn=admin, dc=centralesupelec, dc=fr"
-    password: XXXXX
+    name: "cn=admin, dc=example, dc=com"
+    password: XXXXXXXX
     address: localhost
 
 postmap_cmd: /usr/sbin/postmap
@@ -14,5 +14,25 @@ map:
 - file: "login2name-centralesupelec"
   filter: "(&(objectClass=person)(mail=*@centralesupelec.fr))"
   template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
-  result_filter_template: "contains(${mailLocalAddress}, @test.fr)"
+  result_filter_template: "contains('${mailLocalAddress}', '@example.com')"
   baseDN: "ou=people,dc=centralesupelec,dc=fr"
+
+diff_ckeck:
+  generate_if_diff: false
+  max_diff: 20
+  smtp_server: smtp.centralesupelec.fr
+  recipient:
+    - test@example.com
+
+
+#TODO modifier le script pour une conf du type :
+#map: 
+#- file: "test"
+#  request:
+#  - filter: "(&(objectClass=person)(mail=*@student.ecp.fr))"
+#    template: "${supannAliasLogin}@student.ecp.fr\t\t${mail}"
+#    baseDN: "ou=people,dc=centralesupelec,dc=fr"
+#  - filter: "(&(objectClass=person)(mail=*@centralesupelec.fr))"
+#    template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
+#    result_filter_template: "contains(${mailLocalAddress}, @example.com)"
+#    baseDN: "ou=people,dc=centralesupelec,dc=fr"
