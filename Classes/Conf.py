@@ -35,10 +35,19 @@ class Validator:
 	def is_map_conf_valid(map_conf):
 		if not "file" in map_conf:
 			return False
-		if not "filter" in map_conf:
+		if not "request" in map_conf:
 			return False
-		if not "template" in map_conf:
+		for r in map_conf["request"]:
+			if not Validator.is_request_conf_valid(r):
+				return False
+		return True
+
+	@staticmethod
+	def is_request_conf_valid(request_conf):
+		if not "filter" in request_conf:
 			return False
-		if not "baseDN" in map_conf:
+		if not "template" in request_conf:
+			return False
+		if not "baseDN" in request_conf:
 			return False
 		return True

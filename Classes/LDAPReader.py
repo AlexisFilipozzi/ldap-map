@@ -1,4 +1,5 @@
 from ldap3 import Server, Connection, ALL, SUBTREE, core
+from Classes.Bind import Bind
 
 class LDAPReader:
 	def __init__(self, bind, base_dn, query_filter, attributes):
@@ -27,3 +28,6 @@ class LDAPReader:
 			except core.exceptions.LDAPKeyError as e:
 				pass
 		return result
+
+	def create_bind(conf):
+		return Bind(conf["bind"]["name"], conf["bind"]["password"], conf["bind"]["address"])

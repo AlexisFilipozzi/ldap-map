@@ -12,7 +12,7 @@ class CheckStrategy:
 
 class DiffCheckerStrategy(CheckStrategy):
 	def handle_file(self, new_file_content, generator):
-		if not os.path.isfile(generator._map_name):
+		if not os.path.isfile(generator.map_conf()["file"]):
 			# the file doesn't exist, there is no diff to check
 			return False
 
@@ -21,7 +21,7 @@ class DiffCheckerStrategy(CheckStrategy):
 			# even when there is too much diff we generator, the file, so there is no need to check
 			return False
 
-		with open(generator._map_name) as f:
+		with open(generator.map_conf()["file"]) as f:
 			old_lines = f.readlines()
 			diff = difflib.Differ().compare(new_file_content, old_lines)
 			nb_diff = 0
@@ -30,7 +30,7 @@ class DiffCheckerStrategy(CheckStrategy):
 				if code in [ "+ ", "- "]:
 					nb_diff += 1
 			if nb_diff > diff_check_conf["max_diff"]:
-				msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécuter le script de génération de table en modifiant le paramètre generate_if_diff.") # TODO regarder qu'on apelle pas le script toutes les minutes en crontab
+				msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécuter le script de génération de table en modifiant le paramètre generate_if_diff.")
 				msg['Subject'] = "Trop de modification dans la génération de table Postfix"
 				msg['From'] = "root@localhost"
 				msg['To'] = ",".join(diff_check_conf["recipient"])
@@ -40,8 +40,3 @@ class DiffCheckerStrategy(CheckStrategy):
 				s.quit() # TODO test
 				return True
 		return False
-
-
-class WriterStrategy(CheckStrategy):
-	def handle_file(self, new_file_content, generator):
-		generator.write_file(new_file_content)
