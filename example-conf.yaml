@@ -4,7 +4,7 @@ bind:
     password: password
     address: localhost
 
-postmap_cmd: /bin/echo
+postmap_cmd: /usr/sbin/postmap
 
 map:
 - file: "login2name"

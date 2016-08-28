@@ -9,13 +9,17 @@ class NoAttributeException(Exception):
 		Exception.__init__(self,"No attribute in the current template " + str(template) + " to generate " + str(map_name))
 
 class Generator:
-	def __init__(self, conf, map_conf):
+	def __init__(self, conf, map_conf, optlist):
 		self._map_conf = map_conf
 		self._conf = conf
+		self._optlist = optlist
 		self._files_strategies = []
 
 	def diff_checks(self):
 		return self._conf["diff_ckeck"] if "diff_ckeck" in self._conf.keys() else None
+
+	def opt_list(self):
+		return self._optlist
 
 	def map_conf(self):
 		return self._map_conf
@@ -55,6 +59,7 @@ class Generator:
 		with open(self._map_conf["file"], "w") as f:
 			for line in lines:
 				f.write(str(line))
+			print("file " + str(self._map_conf["file"]) + " has been generated")
 
 	def generate_for_one_entry_to_string(self, request, template_value):
 		# we first verify that we have to add this line

@@ -18,7 +18,7 @@ class DiffCheckerStrategy(CheckStrategy):
 
 		diff_check_conf = generator.diff_checks()
 		if (not diff_check_conf) or diff_check_conf["generate_if_diff"]:
-			# even when there is too much diff we generator, the file, so there is no need to check
+			# even when there is too much diff we generate the file, so there is no need to check
 			return False
 
 		with open(generator.map_conf()["file"]) as f:
@@ -30,13 +30,21 @@ class DiffCheckerStrategy(CheckStrategy):
 				if code in [ "+ ", "- "]:
 					nb_diff += 1
 			if nb_diff > diff_check_conf["max_diff"]:
-				msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécuter le script de génération de table en modifiant le paramètre generate_if_diff.")
-				msg['Subject'] = "Trop de modification dans la génération de table Postfix"
-				msg['From'] = "root@localhost"
-				msg['To'] = ",".join(diff_check_conf["recipient"])
+				opt_list = generator.opt_list()
+				force = ("-f", "") in opt_list
+				if force:
+					print("Trop de changement dans la table %s, cette table sera tout de même générée." % generator.map_conf()["file"])
+					return False
+				else:
+					msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécuter le script de génération de table en modifiant le paramètre generate_if_diff." % generator.map_conf()["file"])
+					msg['Subject'] = "Trop de modification dans la génération de table Postfix"
+					msg['From'] = "root@localhost"
+					msg['To'] = ",".join(diff_check_conf["recipient"])
 				
-				s = smtplib.SMTP('localhost')
-				s.send_message(msg)
-				s.quit()
-				return True
+					s = smtplib.SMTP('localhost')
+					s.send_message(msg)
+					s.quit()
+
+					print("The file %s has NOT been generated due to too much change, to generate it anyway use the flag -f" % generator.map_conf()["file"])
+					return True
 		return False

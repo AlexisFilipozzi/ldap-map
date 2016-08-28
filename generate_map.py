@@ -4,6 +4,7 @@ from Classes.CheckStrategy import DiffCheckerStrategy
 import yaml
 import sys
 import re
+import getopt
 
 
 class InvalidConfigurationException(Exception):
@@ -13,7 +14,7 @@ class InvalidConfigurationException(Exception):
 
 class Program:
 	@staticmethod
-	def run(conf_file):
+	def run(conf_file, optlist):
 		conf = None
 		with open(conf_file) as f:
 			conf = yaml.load(f.read())
@@ -23,17 +24,27 @@ class Program:
 			raise InvalidConfigurationException(conf_file)
 
 		for map_conf in conf["map"]:
-			generator = Generator(conf, map_conf)
+			generator = Generator(conf, map_conf, optlist)
 			if "diff_ckeck" in conf.keys():
 				generator.add_strategy(DiffCheckerStrategy())
 			generator.generate(conf["postmap_cmd"])
-			print("file " + str(map_conf["file"]) + " has been generated")
 
 
 
 def main(argv):
-	for arg in argv:
-		Program.run(arg)
+	optlist, args = getopt.getopt(argv, 'fh')
+	if ("-h", "") in optlist:
+		self.print_help()
+		return
+	for arg in args:
+		Program.run(arg, optlist)
+
+def print_help(self):
+	print("generate_map.py: generate postfix text map using a configuration file\n"
+		  "Options:\n"
+		  "  - f: force to generate\n"
+		  "  - h: display this help\n"
+		  "usage: generate_map.py [-f] [-h] example.conf example-bis.conf\n")
 
 
 if __name__ == "__main__":
