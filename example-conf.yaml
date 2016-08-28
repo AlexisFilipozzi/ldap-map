@@ -19,6 +19,7 @@ map:
 
 diff_ckeck:
   generate_if_diff: false
+  sender: root@example.com
   max_diff: 20
   smtp_server: smtp.example.com
   recipient:

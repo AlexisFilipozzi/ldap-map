@@ -36,12 +36,12 @@ class DiffCheckerStrategy(CheckStrategy):
 					print("Trop de changement dans la table %s, cette table sera tout de même générée." % generator.map_conf()["file"])
 					return False
 				else:
-					msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécuter le script de génération de table en modifiant le paramètre generate_if_diff." % generator.map_conf()["file"])
+					msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécutez le script de génération de table en modifiant le paramètre generate_if_diff." % generator.map_conf()["file"])
 					msg['Subject'] = "Trop de modification dans la génération de table Postfix"
-					msg['From'] = "root@localhost"
+					msg['From'] = diff_check_conf["sender"]
 					msg['To'] = ",".join(diff_check_conf["recipient"])
 				
-					s = smtplib.SMTP('localhost')
+					s = smtplib.SMTP(diff_check_conf["smtp_server"])
 					s.send_message(msg)
 					s.quit()
 
