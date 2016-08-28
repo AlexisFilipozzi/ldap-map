@@ -58,11 +58,6 @@ def argpos(call_string):
 		result.append((start, end))
 	return result
 
-# TODO dans generate_map.py pour chaque résultat remplacer dans result_filter_template
-# les valeurs par les champs de l'entrée, et evaluer le prédicat.
-# Alors on enregistre le résultat que si le répdicat est vrai
-
-
 
 class InvalidPredicateException(Exception):
 	def __init__(self, predicate):

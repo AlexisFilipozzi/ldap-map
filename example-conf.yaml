@@ -1,38 +1,25 @@
 --- 
 bind:
     name: "cn=admin, dc=example, dc=com"
-    password: XXXXXXXX
+    password: password
     address: localhost
 
-postmap_cmd: /usr/sbin/postmap
+postmap_cmd: /bin/echo
 
 map:
-- file: "login2name-student-ecp"
-  filter: "(&(objectClass=person)(mail=*@student.ecp.fr))"
-  template: "${supannAliasLogin}@student.ecp.fr\t\t${mail}"
-  baseDN: "ou=people,dc=centralesupelec,dc=fr"
-- file: "login2name-centralesupelec"
-  filter: "(&(objectClass=person)(mail=*@centralesupelec.fr))"
-  template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
-  result_filter_template: "contains('${mailLocalAddress}', '@example.com')"
-  baseDN: "ou=people,dc=centralesupelec,dc=fr"
+- file: "login2name"
+  request:
+  - filter: "(&(objectClass=person)(mail=*@example.com))"
+    template: "${supannAliasLogin}@example.com\t\t${mail}"
+    baseDN: "ou=people, dc=example, dc=com"
+  - filter: "(&(objectClass=person)(mail=*@example.com))"
+    template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
+    result_filter_template: "contains('${mailLocalAddress}', '@example.com')"
+    baseDN: "ou=people, dc=example, dc=com"
 
 diff_ckeck:
   generate_if_diff: false
   max_diff: 20
-  smtp_server: smtp.centralesupelec.fr
+  smtp_server: smtp.example.com
   recipient:
     - test@example.com
-
-
-#TODO modifier le script pour une conf du type :
-#map: 
-#- file: "test"
-#  request:
-#  - filter: "(&(objectClass=person)(mail=*@student.ecp.fr))"
-#    template: "${supannAliasLogin}@student.ecp.fr\t\t${mail}"
-#    baseDN: "ou=people,dc=centralesupelec,dc=fr"
-#  - filter: "(&(objectClass=person)(mail=*@centralesupelec.fr))"
-#    template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
-#    result_filter_template: "contains(${mailLocalAddress}, @example.com)"
-#    baseDN: "ou=people,dc=centralesupelec,dc=fr"

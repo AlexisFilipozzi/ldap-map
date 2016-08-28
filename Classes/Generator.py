@@ -12,21 +12,10 @@ class Generator:
 	def __init__(self, conf, map_conf):
 		self._map_conf = map_conf
 		self._conf = conf
-		self._template_string = ""
-		self._template = Template(self._template_string)
-		self._result_filter_template_string = ""
-		self._result_filter_template = Template(self._result_filter_template_string)
 		self._files_strategies = []
-		self._diff_checks = conf["diff_ckeck"] if "diff_ckeck" in conf.keys() else None
-
-	def set_current_request(self, request):
-		self._template_string = request["template"]
-		self._template = Template(self._template_string)
-		self._result_filter_template_string = request["result_filter_template"] if "result_filter_template" in request else ""
-		self._result_filter_template = Template(self._result_filter_template_string)
 
 	def diff_checks(self):
-		return self._diff_checks
+		return self._conf["diff_ckeck"] if "diff_ckeck" in self._conf.keys() else None
 
 	def map_conf(self):
 		return self._map_conf
@@ -46,13 +35,11 @@ class Generator:
 			ldap_reader.read()
 			data = ldap_reader.get_list_dict_from_result()
 
-			self.set_current_request(request)
-
 			for entry in data:
 				template_value = {}
 				valid = True
 				for flat_dict in Generator.to_flat_dict(entry, request["keys"] if "keys" in request else None):
-					self.generate_for_one_entry_to_string(lines, flat_dict)
+					lines.append(self.generate_for_one_entry_to_string(request, flat_dict))
 
 		# we have generated, now we check
 		for strat in self._files_strategies:
@@ -69,12 +56,14 @@ class Generator:
 			for line in lines:
 				f.write(str(line))
 
-	def generate_for_one_entry_to_string(self, lines, template_value):
+	def generate_for_one_entry_to_string(self, request, template_value):
 		# we first verify that we have to add this line
 		append = True
-		if self._result_filter_template_string:
+		if "result_filter_template" in request:
+			result_filter_template_string = request["result_filter_template"]
+			result_filter_template = Template(result_filter_template_string)
 			# we have to filter the result
-			result_predicate = self._result_filter_template.substitute(template_value)
+			result_predicate = result_filter_template.substitute(template_value)
 			evaluator = PredicateEvaluator(result_predicate)
 			if not evaluator.eval_predicate():
 				# the predicate is False, don't append
@@ -87,8 +76,9 @@ class Generator:
 					template_value_no_list[key] = ", ".join(val)
 				else:
 					template_value_no_list[key] = val
-			to_append = self._template.substitute(template_value_no_list)
-			lines.append(str(to_append) + "\n")
+			template = Template(request["template"])
+			to_append = template.substitute(template_value_no_list)
+			return str(to_append) + "\n"
 
 	@staticmethod
 	def attribute_from_template_string(template_string):

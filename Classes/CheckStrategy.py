@@ -37,6 +37,6 @@ class DiffCheckerStrategy(CheckStrategy):
 				
 				s = smtplib.SMTP('localhost')
 				s.send_message(msg)
-				s.quit() # TODO test
+				s.quit()
 				return True
 		return False

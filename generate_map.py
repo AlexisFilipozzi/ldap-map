@@ -12,7 +12,6 @@ class InvalidConfigurationException(Exception):
 
 
 class Program:
-	# TODO multiple LDAP request for one file (il faut faire plusieurs appel LDAP et donc déplacer l'appel au LDAP)
 	@staticmethod
 	def run(conf_file):
 		conf = None
