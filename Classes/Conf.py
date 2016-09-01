@@ -19,14 +19,12 @@ class Validator:
 			if not Validator.is_map_conf_valid(m):
 				return False
 
-		if "diff_ckeck" in conf:
-			if not "generate_if_diff" in conf["diff_ckeck"]:
+		if "smtp" in conf:
+			if not "sender" in conf["smtp"]:
 				return False
-			if not "max_diff" in conf["diff_ckeck"]:
+			if not "smtp_server" in conf["smtp"]:
 				return False
-			if not "smtp_server" in conf["diff_ckeck"]:
-				return False
-			if not "recipient" in conf["diff_ckeck"]:
+			if not "recipient" in conf["smtp"]:
 				return False
 		return True
 
@@ -46,7 +44,9 @@ class Validator:
 	def is_request_conf_valid(request_conf):
 		if not "filter" in request_conf:
 			return False
-		if not "template" in request_conf:
+		if not "key_template" in request_conf:
+			return False
+		if not "value_template" in request_conf:
 			return False
 		if not "baseDN" in request_conf:
 			return False

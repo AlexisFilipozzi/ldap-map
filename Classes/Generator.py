@@ -2,6 +2,8 @@ from string import Template
 from subprocess import call
 from Classes.LDAPReader import LDAPReader
 from Classes.PredicateEvaluator import PredicateEvaluator
+from Classes.CheckStrategy import DiffCheckerStrategy
+from Classes.FormatStrategy import DuplicateCheckStrategy, NoEmptyCheckStrategy
 import re
 
 class NoAttributeException(Exception):
@@ -14,9 +16,18 @@ class Generator:
 		self._conf = conf
 		self._optlist = optlist
 		self._files_strategies = []
+		self._format_strategies = []
 
-	def diff_checks(self):
-		return self._conf["diff_ckeck"] if "diff_ckeck" in self._conf.keys() else None
+	@classmethod
+	def create(cls, conf, map_conf, optlist):
+		generator = Generator(conf, map_conf, optlist)
+		generator.add_format_strategy(DuplicateCheckStrategy()) # no duplicate entries
+		if "check_diff" in map_conf.keys() and map_conf["check_diff"]:
+			generator.add_check_strategy(DiffCheckerStrategy()) # if we have to check for diff, add this strategy
+		return generator
+
+	def smtp_conf(self):
+		return self._conf["smtp"] if "smtp" in self._conf.keys() else None
 
 	def opt_list(self):
 		return self._optlist
@@ -24,15 +35,19 @@ class Generator:
 	def map_conf(self):
 		return self._map_conf
 
-	def add_strategy(self, strat):
+	def add_check_strategy(self, strat):
 		self._files_strategies.append(strat)
 
-	def generate(self, postmap_cmd):
+	def add_format_strategy(self, strat):
+		self._format_strategies.append(strat)
+
+	def generate(self):
 		lines = []
+		postmap_cmd = self._conf["postmap_cmd"]
 
 		bind = LDAPReader.create_bind(self._conf)
 		for request in self._map_conf["request"]:
-			attr = Generator.attribute_from_template_string(request["template"])
+			attr = Generator.attribute_from_template_string(request["key_template"]) + Generator.attribute_from_template_string(request["value_template"])
 			if "result_filter_template" in request:
 				attr += Generator.attribute_from_template_string(request["result_filter_template"])
 			ldap_reader = LDAPReader(bind, request["baseDN"], request["filter"], attr)
@@ -44,6 +59,19 @@ class Generator:
 				valid = True
 				for flat_dict in Generator.to_flat_dict(entry, request["keys"] if "keys" in request else None):
 					lines.append(self.generate_for_one_entry_to_string(request, flat_dict))
+
+		# apply formatter
+		handled_lines = []
+		for line in lines:
+			append = True
+			for strat in self._format_strategies:
+				if not strat.handle_line(line, handled_lines):
+					append = False
+					break
+			if append:
+				handled_lines.append(line)
+
+		lines = handled_lines
 
 		# we have generated, now we check
 		for strat in self._files_strategies:
@@ -75,14 +103,17 @@ class Generator:
 				append = False
 
 		if append:
+			# we need to remove list in template value
+			# if there is a list we replace it by a string
 			template_value_no_list = {}
 			for (key, val) in template_value.items():
 				if isinstance(val, list):
 					template_value_no_list[key] = ", ".join(val)
 				else:
 					template_value_no_list[key] = val
-			template = Template(request["template"])
-			to_append = template.substitute(template_value_no_list)
+			key_template = Template(request["key_template"])
+			value_template = Template(request["value_template"])
+			to_append = key_template.substitute(template_value_no_list) + "\t" + value_template.substitute(template_value_no_list)
 			return str(to_append) + "\n"
 
 	@staticmethod

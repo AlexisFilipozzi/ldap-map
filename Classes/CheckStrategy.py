@@ -11,13 +11,20 @@ class CheckStrategy:
 
 
 class DiffCheckerStrategy(CheckStrategy):
+	def get_max_diff(generator):
+		map_conf = generator.map_conf()
+		if 'max_diff' in map_conf:
+			return map_conf['max_diff']
+		else:
+			return 20
+
 	def handle_file(self, new_file_content, generator):
 		if not os.path.isfile(generator.map_conf()["file"]):
 			# the file doesn't exist, there is no diff to check
 			return False
 
-		diff_check_conf = generator.diff_checks()
-		if (not diff_check_conf) or diff_check_conf["generate_if_diff"]:
+		smtp_conf = generator.smtp_conf()
+		if (not smtp_conf):
 			# even when there is too much diff we generate the file, so there is no need to check
 			return False
 
@@ -29,7 +36,7 @@ class DiffCheckerStrategy(CheckStrategy):
 				code = d[:2]
 				if code in [ "+ ", "- "]:
 					nb_diff += 1
-			if nb_diff > diff_check_conf["max_diff"]:
+			if nb_diff > self.get_max_diff(generator):
 				opt_list = generator.opt_list()
 				force = ("-f", "") in opt_list
 				if force:
@@ -38,10 +45,10 @@ class DiffCheckerStrategy(CheckStrategy):
 				else:
 					msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécutez le script de génération de table en modifiant le paramètre generate_if_diff." % generator.map_conf()["file"])
 					msg['Subject'] = "Trop de modification dans la génération de table Postfix"
-					msg['From'] = diff_check_conf["sender"]
-					msg['To'] = ",".join(diff_check_conf["recipient"])
+					msg['From'] = smtp_conf["sender"]
+					msg['To'] = ",".join(smtp_conf["recipient"])
 				
-					s = smtplib.SMTP(diff_check_conf["smtp_server"])
+					s = smtplib.SMTP(smtp_conf["smtp_server"])
 					s.send_message(msg)
 					s.quit()
 

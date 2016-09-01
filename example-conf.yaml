@@ -10,17 +10,19 @@ map:
 - file: "login2name"
   request:
   - filter: "(&(objectClass=person)(mail=*@example.com))"
-    template: "${supannAliasLogin}@example.com\t\t${mail}"
+    key_template: "$${supannAliasLogin}@example.com"
+    value_template: "${mail}"
     baseDN: "ou=people, dc=example, dc=com"
   - filter: "(&(objectClass=person)(mail=*@example.com))"
-    template: "${supannAliasLogin}@ecp.fr\t\t${mail}"
+    key_template: "${supannAliasLogin}@ecp.fr"
+    value_template: "${mail}"
     result_filter_template: "contains('${mailLocalAddress}', '@example.com')"
     baseDN: "ou=people, dc=example, dc=com"
+  check_diff: yes # default to no
+  max_diff: 30 # default to 20
 
-diff_ckeck:
-  generate_if_diff: false
+smtp:
   sender: root@example.com
-  max_diff: 20
   smtp_server: smtp.example.com
   recipient:
     - test@example.com

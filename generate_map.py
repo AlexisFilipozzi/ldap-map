@@ -1,6 +1,6 @@
 from Classes.Conf import Validator
 from Classes.Generator import Generator
-from Classes.CheckStrategy import DiffCheckerStrategy
+
 import yaml
 import sys
 import re
@@ -24,11 +24,8 @@ class Program:
 			raise InvalidConfigurationException(conf_file)
 
 		for map_conf in conf["map"]:
-			generator = Generator(conf, map_conf, optlist)
-			if "diff_ckeck" in conf.keys():
-				generator.add_strategy(DiffCheckerStrategy())
-			generator.generate(conf["postmap_cmd"])
-
+			generator = Generator.create(conf, map_conf, optlist)
+			generator.generate()
 
 
 def main(argv):
