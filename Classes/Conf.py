@@ -2,52 +2,55 @@ class Validator:
 	@staticmethod
 	def is_conf_valid(conf):
 		if not "bind" in conf:
-			return False
+			return "bind is missing"
 		if not "name" in conf["bind"]:
-			return False
+			return "bind name is missing"
 		if not "address" in conf["bind"]:
-			return False
+			return "bind address is missing"
 		if not "password" in conf["bind"]:
-			return False
+			return "bind password is missing"
 
 		if not "postmap_cmd" in conf:
-			return False
+			return "postmap command is missing"
 
 		if not "map" in conf:
-			return False
+			return "map attribute is missing"
 		for m in conf["map"]:
-			if not Validator.is_map_conf_valid(m):
-				return False
+			msg = Validator.is_map_conf_valid(m)
+			if msg != "":
+				return msg
 
 		if "smtp" in conf:
 			if not "sender" in conf["smtp"]:
-				return False
+				return "smtp-sender is missing"
 			if not "smtp_server" in conf["smtp"]:
-				return False
+				return "smtp-server is missing"
 			if not "recipient" in conf["smtp"]:
-				return False
-		return True
+				return "smtp recipient list is missing"
+		return ""
 
 
 	@staticmethod
 	def is_map_conf_valid(map_conf):
 		if not "file" in map_conf:
-			return False
+			return "map file name is missing"
+		filename = str(map_conf["file"])
 		if not "request" in map_conf:
-			return False
+			return "map request is missing for map " + filename
 		for r in map_conf["request"]:
-			if not Validator.is_request_conf_valid(r):
-				return False
-		return True
+			msg = Validator.is_request_conf_valid(r)
+			if msg != "":
+				return msg + " for map " + filename
+		return ""
 
 	@staticmethod
 	def is_request_conf_valid(request_conf):
 		if not "filter" in request_conf:
-			return False
+			return "request filter is missing"
 		if not "key_template" in request_conf:
-			return False
+			return "key_template is missing"
 		if not "value_template" in request_conf:
-			return False
+			return "value_template is missing"
 		if not "baseDN" in request_conf:
-			return False
-		return True
+			return "baseDN is missing"
+		return ""

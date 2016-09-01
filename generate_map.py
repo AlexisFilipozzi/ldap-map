@@ -8,8 +8,8 @@ import getopt
 
 
 class InvalidConfigurationException(Exception):
-	def __init__(self, filename):
-		Exception.__init__(self,"Invalid configuration file " + str(filename))
+	def __init__(self, filename, msg):
+		Exception.__init__(self,"Invalid configuration file " + str(filename) + "\n" + msg)
 
 
 class Program:
@@ -20,12 +20,18 @@ class Program:
 			conf = yaml.load(f.read())
 		if not conf:
 			return
-		if not Validator.is_conf_valid(conf):
-			raise InvalidConfigurationException(conf_file)
+
+		Program.check_conf(conf, conf_file)
 
 		for map_conf in conf["map"]:
 			generator = Generator.create(conf, map_conf, optlist)
 			generator.generate()
+
+	@staticmethod
+	def check_conf(conf, conf_file):
+		msg = Validator.is_conf_valid(conf)
+		if msg != "":
+			raise InvalidConfigurationException(conf_file, msg)
 
 
 def main(argv):
