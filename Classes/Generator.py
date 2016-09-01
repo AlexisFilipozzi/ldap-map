@@ -74,8 +74,9 @@ class Generator:
 		lines = handled_lines
 
 		# we have generated, now we check
+		force = ("-f", "") in self.opt_list()
 		for strat in self._files_strategies:
-			if strat.handle_file(lines, self):
+			if strat.handle_file(lines, self, force) and not force: # we add and not force as a small security to be able to call all strat handle file (and thus be able to print warning)
 				return
 
 		# and we write to the file, if all checks are good

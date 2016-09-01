@@ -5,7 +5,7 @@ import smtplib
 
 
 class CheckStrategy:
-	def handle_file(self, new_file_content, generator):
+	def handle_file(self, new_file_content, generator, force):
 		# return True if the generated file has been handled (next MapFileStrategy will not be called)
 		return False
 
@@ -18,7 +18,7 @@ class DiffCheckerStrategy(CheckStrategy):
 		else:
 			return 20
 
-	def handle_file(self, new_file_content, generator):
+	def handle_file(self, new_file_content, generator, force):
 		if not os.path.isfile(generator.map_conf()["file"]):
 			# the file doesn't exist, there is no diff to check
 			return False
@@ -37,8 +37,6 @@ class DiffCheckerStrategy(CheckStrategy):
 				if code in [ "+ ", "- "]:
 					nb_diff += 1
 			if nb_diff > self.get_max_diff(generator):
-				opt_list = generator.opt_list()
-				force = ("-f", "") in opt_list
 				if force:
 					print("Trop de changement dans la table %s, cette table sera tout de même générée." % generator.map_conf()["file"])
 					return False
