@@ -11,7 +11,7 @@ class CheckStrategy:
 
 
 class DiffCheckerStrategy(CheckStrategy):
-	def get_max_diff(generator):
+	def get_max_diff(self, generator):
 		map_conf = generator.map_conf()
 		if 'max_diff' in map_conf:
 			return map_conf['max_diff']
