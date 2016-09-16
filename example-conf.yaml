@@ -10,13 +10,13 @@ map:
 - file: "login2name"
   request:
   - filter: "(&(objectClass=person)(mail=*@example.com))"
-    key_template: "$${supannAliasLogin}@example.com"
-    value_template: "${mail}"
+    key_template: "{{ supannAliasLogin || lower }}@example.com"
+    value_template: "{{mail}}"
     baseDN: "ou=people, dc=example, dc=com"
   - filter: "(&(objectClass=person)(mail=*@example.com))"
-    key_template: "${supannAliasLogin}@ecp.fr"
-    value_template: "${mail}"
-    result_filter_template: "contains('${mailLocalAddress}', '@example.com')"
+    key_template: "{{supannAliasLogin}@ecp.fr"
+    value_template: "{{mail}}"
+    result_filter_template: "contains('{{mailLocalAddress}}', '@example.com')"
     baseDN: "ou=people, dc=example, dc=com"
   check_diff: yes # default to no
   max_diff: 30 # default to 20

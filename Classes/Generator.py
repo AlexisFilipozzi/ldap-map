@@ -1,9 +1,9 @@
-from string import Template
 from subprocess import call
 from Classes.LDAPReader import LDAPReader
 from Classes.PredicateEvaluator import PredicateEvaluator
 from Classes.CheckStrategy import DiffCheckerStrategy
 from Classes.FormatStrategy import DuplicateCheckStrategy, NoEmptyCheckStrategy
+from Classes import TemplateFilter
 import re
 
 class NoAttributeException(Exception):
@@ -58,7 +58,9 @@ class Generator:
 				template_value = {}
 				valid = True
 				for flat_dict in Generator.to_flat_dict(entry, request["keys"] if "keys" in request else None):
-					lines.append(self.generate_for_one_entry_to_string(request, flat_dict))
+					line = self.generate_for_one_entry_to_string(request, flat_dict)
+					if line:
+						lines.append(line)
 
 		# apply formatter
 		handled_lines = []
@@ -93,11 +95,13 @@ class Generator:
 	def generate_for_one_entry_to_string(self, request, template_value):
 		# we first verify that we have to add this line
 		append = True
+
+		engine = TemplateFilter.Engine()
+
 		if "result_filter_template" in request:
 			result_filter_template_string = request["result_filter_template"]
-			result_filter_template = Template(result_filter_template_string)
+			result_predicate = engine.apply(result_filter_template_string, template_value)
 			# we have to filter the result
-			result_predicate = result_filter_template.substitute(template_value)
 			evaluator = PredicateEvaluator(result_predicate)
 			if not evaluator.eval_predicate():
 				# the predicate is False, don't append
@@ -112,14 +116,15 @@ class Generator:
 					template_value_no_list[key] = ", ".join(val)
 				else:
 					template_value_no_list[key] = val
-			key_template = Template(request["key_template"])
-			value_template = Template(request["value_template"])
-			to_append = key_template.substitute(template_value_no_list) + "\t" + value_template.substitute(template_value_no_list)
+			key = engine.apply(request["key_template"], template_value_no_list)
+			value = engine.apply(request["value_template"], template_value_no_list)
+			to_append = key + "\t" + value
 			return str(to_append) + "\n"
+		return None
 
 	@staticmethod
 	def attribute_from_template_string(template_string):
-		return re.findall(r"\$\{?(\w+)\}?", template_string)
+		return re.findall(TemplateFilter.Engine.var_filter_string_regex, template_string)
 
 	@staticmethod
 	def to_flat_dict(d, key_to_flat):
