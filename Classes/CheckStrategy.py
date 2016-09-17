@@ -47,8 +47,11 @@ class DiffCheckerStrategy(CheckStrategy):
 					msg['To'] = ",".join(smtp_conf["recipient"])
 				
 					s = smtplib.SMTP(smtp_conf["smtp_server"])
-					s.send_message(msg)
-					s.quit()
+					try:
+						s.send_message(msg)
+						s.quit()
+					except smtplib.SMTPException:
+						print("Error while sending mail")
 
 					print("The file %s has NOT been generated due to too much change, to generate it anyway use the flag -f" % generator.map_conf()["file"])
 					return True
