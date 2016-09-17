@@ -20,6 +20,7 @@ map:
     baseDN: "ou=people, dc=example, dc=com"
   check_diff: yes # default to no
   max_diff: 30 # default to 20
+  sorted: yes # default to yes
 
 smtp:
   sender: root@example.com

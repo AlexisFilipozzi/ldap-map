@@ -4,6 +4,7 @@ from Classes.PredicateEvaluator import PredicateEvaluator
 from Classes.CheckStrategy import DiffCheckerStrategy
 from Classes.FormatStrategy import DuplicateCheckStrategy, NoEmptyCheckStrategy
 from Classes import TemplateFilter
+from Classes.List import AutoSortList
 import re
 
 class NoAttributeException(Exception):
@@ -42,7 +43,8 @@ class Generator:
 		self._format_strategies.append(strat)
 
 	def generate(self):
-		lines = []
+		sort_enabled = True if "sorted" not in self._map_conf else self._map_conf["sorted"]
+		lines = AutoSortList(sort_enabled)
 		postmap_cmd = self._conf["postmap_cmd"]
 
 		bind = LDAPReader.create_bind(self._conf)
@@ -60,11 +62,11 @@ class Generator:
 				for flat_dict in Generator.to_flat_dict(entry, request["keys"] if "keys" in request else None):
 					line = self.generate_for_one_entry_to_string(request, flat_dict)
 					if line:
-						lines.append(line)
+						lines.add(line)
 
 		# apply formatter
 		handled_lines = []
-		for line in lines:
+		for line in lines.get():
 			append = True
 			for strat in self._format_strategies:
 				if not strat.handle_line(line, handled_lines):
