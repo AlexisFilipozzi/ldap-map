@@ -1,7 +1,6 @@
-from email.mime.text import MIMEText
 import os
 import difflib
-import smtplib
+from Classes.Mailer import Mailer
 
 
 class CheckStrategy:
@@ -41,17 +40,15 @@ class DiffCheckerStrategy(CheckStrategy):
 					print("Trop de changement dans la table %s, cette table sera tout de même générée." % generator.map_conf()["file"])
 					return False
 				else:
-					msg = MIMEText("A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécutez le script de génération de table en utilisant le flag -f." % generator.map_conf()["file"])
-					msg['Subject'] = "Trop de modification dans la génération de table Postfix"
-					msg['From'] = smtp_conf["sender"]
-					msg['To'] = ",".join(smtp_conf["recipient"])
+					mailer = Mailer.get_instance()
+					msg = "A cause d'un trop grand nombre de modifications dans la génération de la table %s, cette table n'a pas été regénérée. Pour la regénérer, réexécutez le script de génération de table en utilisant le flag -f." % generator.map_conf()["file"]
+					subject = "Trop de modification dans la génération de table Postfix"
+					from_who = smtp_conf["sender"]
+					to = smtp_conf["recipient"]
+					smtp = smtp_conf["smtp_server"]
 				
-					s = smtplib.SMTP(smtp_conf["smtp_server"])
-					try:
-						s.send_message(msg)
-						s.quit()
-					except smtplib.SMTPException:
-						print("Error while sending mail")
+					if not mailer.send_mail(from_who, to, subject, msg, smtp):
+						print("No mail has been sent")
 
 					print("The file %s has NOT been generated due to too much change, to generate it anyway use the flag -f" % generator.map_conf()["file"])
 					return True

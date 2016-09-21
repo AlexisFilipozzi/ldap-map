@@ -5,7 +5,7 @@ import yaml
 import sys
 import re
 import getopt
-
+import os
 
 class InvalidConfigurationException(Exception):
 	def __init__(self, filename, msg):
@@ -13,8 +13,14 @@ class InvalidConfigurationException(Exception):
 
 
 class Program:
-	@staticmethod
-	def run(conf_file, optlist):
+	_initial_path = ""
+
+	@classmethod
+	def init(cls):
+		cls._initial_path = os.environ["PATH"]
+
+	@classmethod
+	def run(cls, conf_file, optlist):
 		conf = None
 		with open(conf_file) as f:
 			conf = yaml.load(f.read())
@@ -22,6 +28,9 @@ class Program:
 			return
 
 		Program.check_conf(conf, conf_file)
+
+		additional_path = conf["path"] if "path" in conf else []
+		os.environ["PATH"] = os.pathsep.join(additional_path)+ os.pathsep + cls._initial_path
 
 		for map_conf in conf["map"]:
 			generator = Generator.create(conf, map_conf, optlist)
@@ -35,6 +44,7 @@ class Program:
 
 
 def main(argv):
+	Program.init()
 	optlist, args = getopt.getopt(argv, 'fh')
 	if ("-h", "") in optlist:
 		self.print_help()

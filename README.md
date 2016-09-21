@@ -9,3 +9,6 @@ apt-get install libsasl2-dev python-dev libldap2-dev libssl-dev
 apt-get install libyaml-dev
 
 On utilise Python3.
+
+On peut également avoir besoin de l'utilitaire mail en CLI, on installe donc :
+apt-get install mailutils

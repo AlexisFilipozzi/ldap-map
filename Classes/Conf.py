@@ -27,6 +27,7 @@ class Validator:
 				return "smtp-server is missing"
 			if not "recipient" in conf["smtp"]:
 				return "smtp recipient list is missing"
+
 		return ""
 
 

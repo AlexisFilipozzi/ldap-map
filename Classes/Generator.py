@@ -1,10 +1,11 @@
 from subprocess import call
-from Classes.LDAPReader import LDAPReader
+from Classes.LDAPReader import LDAPReader, LDAPReaderException
 from Classes.PredicateEvaluator import PredicateEvaluator
 from Classes.CheckStrategy import DiffCheckerStrategy
 from Classes.FormatStrategy import DuplicateCheckStrategy, NoEmptyCheckStrategy
 from Classes import TemplateFilter
 from Classes.List import AutoSortList
+from Classes.Mailer import Mailer
 import re
 
 class NoAttributeException(Exception):
@@ -53,7 +54,21 @@ class Generator:
 			if "result_filter_template" in request:
 				attr += Generator.attribute_from_template_string(request["result_filter_template"])
 			ldap_reader = LDAPReader(bind, request["baseDN"], request["filter"], attr)
-			ldap_reader.read()
+			try:
+				ldap_reader.read()
+			except LDAPReaderException as err:
+				print("LDAP error: ", err)
+				smtp_conf = self._conf["smtp"]
+				mailer = Mailer.get_instance()
+				msg = "LDAP error" + str(err)
+				subject = "Trop de modification dans la génération de table Postfix"
+				from_who = smtp_conf["sender"]
+				to = smtp_conf["recipient"]
+				smtp = smtp_conf["smtp_server"]
+				
+				if not mailer.send_mail(from_who, to, subject, msg, smtp):
+					print("Error while sending mail")
+				return # exit
 			data = ldap_reader.get_list_dict_from_result()
 
 			for entry in data:

@@ -6,6 +6,11 @@ bind:
 
 postmap_cmd: /usr/sbin/postmap
 
+path: # path to echo, mail
+  - /usr/sbin/
+  - /usr/bin/
+  - /bin/
+
 map:
 - file: "login2name"
   request:
