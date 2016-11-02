@@ -35,3 +35,8 @@ On peut vérifier les types statiques avec :
 ```
 mypy Classes generate_map.py
 ```
+
+On peut lancer des tests avec :
+```
+python3 test.py
+```
