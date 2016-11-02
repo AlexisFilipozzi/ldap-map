@@ -1,10 +1,6 @@
 import re
 
-from typing import Dict
-
-# forward declaration
-class TemplateFilter:
-	pass
+from typing import Dict, List, Type, Any
 
 
 class InvalidFilterException(Exception):
@@ -16,8 +12,23 @@ class NoSuchFilterException(Exception):
 	def __init__(self, filter_name: str) -> None:
 		Exception.__init__(self, "No such filter " + str(filter_name))
 
+
+class TemplateFilter:
+	def is_filter(self, name: str) -> bool:
+		"""
+		return True when name is the name of the filter
+		"""
+		return False
+
+	def apply_filter(self, s: str) -> str:
+		"""
+		apply the filter on the string string
+		"""
+		return s
+
+
 class Engine:
-	_filters = []
+	_filters = [] # type: List[TemplateFilter]
 
 	valid_template_filter_string_regex = r"\{{2}\s*(\w+)(?:\s*\|{2}\s*(\w+))*\s*\}{2}"
 	template_filter_string_regex = r"\{\{[^\{\}]*\}\}"
@@ -30,11 +41,11 @@ class Engine:
 			cls._filters.append(filt)
 
 	@classmethod
-	def register_filter(cls, filt: TemplateFilter) -> None:
+	def register_filter(cls, filt: Type[TemplateFilter]) -> Any:
 		"""
 		decorator to register filters
 		"""
-		cls.add_filter(filt)
+		cls.add_filter(filt())
 		return cls
 
 	def apply(self, template_string: str, values: Dict[str, str]) -> str:
@@ -60,7 +71,7 @@ class Engine:
 	def is_valid_template_string(self, str: str) -> bool:
 		return re.match(self.valid_template_filter_string_regex, str) is not None	
 
-	def _apply_filters(self, string_to_filter: str, filters: TemplateFilter) -> str:
+	def _apply_filters(self, string_to_filter: str, filters: List[str]) -> str:
 		res = string_to_filter
 		for filt in filters:
 			res = self._apply_filter(res, filt)
@@ -73,35 +84,21 @@ class Engine:
 		raise NoSuchFilterException(filter_name)
 
 
-class TemplateFilter:
-	def is_filter(name: str) -> bool:
-		"""
-		return True when name is the name of the filter
-		"""
-		return False
-
-	def apply_filter(string: str) -> str:
-		"""
-		apply the filter on the string string
-		"""
-		return string
-
-
 @Engine.register_filter
 class ToLowerCaseFilter(TemplateFilter):
-	def is_filter(name: str) -> bool:
+	def is_filter(self, name: str) -> bool:
 		return name in [ "lower_case", "lower" ]
 
-	def apply_filter(string: str) -> str:
+	def apply_filter(self, string: str) -> str:
 		return string.lower()
 
 
 @Engine.register_filter
 class ToUpperCaseFilter(TemplateFilter):
-	def is_filter(name: str) -> bool:
+	def is_filter(self, name: str) -> bool:
 		return name in [ "upper_case", "upper" ]
 
-	def apply_filter(string: str) -> str:
+	def apply_filter(self, string: str) -> str:
 		return string.upper()
 
 

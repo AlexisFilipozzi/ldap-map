@@ -7,10 +7,10 @@ class Comparator:
 
 class AutoSortList:
 	def __init__(self, enabled: bool=True, comparator: Comparator=Comparator()) -> None:
-		self._sorted = []
-		self._not_sorted = []
-		self._comparator = comparator
-		self._enabled = enabled
+		self._sorted = [] # type: List[Any]
+		self._not_sorted = [] # type: List[Any]
+		self._comparator = comparator # type: Comparator
+		self._enabled = enabled # type: bool
 
 	def get(self) -> List[Any]:
 		if self._enabled:

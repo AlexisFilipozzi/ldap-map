@@ -1,19 +1,16 @@
 from email.mime.text import MIMEText
 import smtplib
 import os
-
-# forward declaration
-class Mailer:
-	pass
+from typing import Any, Type
 
 
 class MailingStrategy:
 	def __init__(self, from_who: str, to: str, title: str, message: str, smtp_server: str) -> None:
-		self._from = from_who
-		self._to = to
-		self._title = title
-		self._message = message
-		self._smtp = smtp_server
+		self._from = from_who # type: str
+		self._to = to # type: str
+		self._title = title # type: str
+		self._message = message # type: str
+		self._smtp = smtp_server # type: str
 
 	def send_message(self) -> bool:
 		return False
@@ -23,14 +20,14 @@ class Mailer:
 	_instance = None
 	
 	def __init__(self) -> None:
-		self._mailing_strategies = []
+		self._mailing_strategies = [] # type: List[Type[MailingStrategy]]
 
-	def add_mailing_strategy(self, strat: MailingStrategy) -> None:
+	def add_mailing_strategy(self, strat: Type[MailingStrategy]) -> None:
 		if not strat in self._mailing_strategies:
 			self._mailing_strategies.append(strat)
 
 	@classmethod
-	def get_instance(cls) -> Mailer:
+	def get_instance(cls) -> 'Mailer':
 		if not cls._instance:
 			cls.create()
 		return cls._instance
@@ -41,7 +38,7 @@ class Mailer:
 			cls._instance = Mailer()
 
 	@classmethod
-	def register_strat(cls, filt: MailingStrategy) -> Mailer:
+	def register_strat(cls, filt: Type[MailingStrategy]) -> Any:
 		instance = cls.get_instance()
 		instance.add_mailing_strategy(filt)
 		return cls
@@ -62,7 +59,7 @@ class SmtpLibStrat(MailingStrategy):
 		msg['From'] = self._from
 		msg['To'] = ",".join(self._to)
 				
-		s = smtplib.SMTP(self._smtp_server)
+		s = smtplib.SMTP(self._smtp)
 		try:
 			s.send_message(msg)
 			s.quit()

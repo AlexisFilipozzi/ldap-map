@@ -1,10 +1,7 @@
 import re
 import ast
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Type
 
-# forward declaration
-class EvaluationStrategy:
-	pass
 
 def collect_offsets(call_string):
 	def _abs_offset(lineno, col_offset):
@@ -64,13 +61,39 @@ def argpos(call_string):
 	return result
 
 
+class EvaluationStrategy:
+	def eval(self, predicate: str) -> Tuple[bool, bool]:
+		"""
+		return Tuple with first value to True if there have been a match, for instance we always return 
+		True when we have (and(P1)(P2)), even if P1 and P2 predicate are False
+
+		the second bool in the tuple is the res
+		"""
+		return False, False
+
+	def get_sub_predicates(self, pred: str) -> List[str]:
+		positions = argpos(pred)
+		result = []
+		for pos in positions:
+			result.append(pred[pos[0]:pos[1]])
+		return result
+
+	def get_unquoted_arg(self, arg: str) -> str:
+		if arg[0]  == arg[-1] == "'":
+			return arg[1:-1]
+
+		if arg[0] == arg[-1] == "\"":
+			return arg[1:-1]
+		return arg
+
+
 class InvalidPredicateException(Exception):
 	def __init__(self, predicate):
 		Exception.__init__(self, "The predicate " + str(predicate)  + "cannot be parsed")
 
 
 class PredicateEvaluator:
-	_strategies = []
+	_strategies = [] # type: List[Type[EvaluationStrategy]]
 
 	def __init__(self, predicate: str) -> None:
 		self._predicate = predicate
@@ -88,39 +111,13 @@ class PredicateEvaluator:
 		raise InvalidPredicateException(self._predicate)
 
 	@classmethod
-	def register_strat(cls, strat: EvaluationStrategy) -> Any:
+	def register_strat(cls, strat: Type[EvaluationStrategy]) -> Any:
 		"""
 		decorator to register EvaluationStrategy
 		"""
 		if strat not in cls._strategies:
 			cls._strategies.append(strat)
 		return cls
-
-
-class EvaluationStrategy:
-	def eval(self, predicate: str) -> Tuple[bool, bool]:
-		"""
-		return Tuple with first value to True if there have been a match, for instance we always return 
-		True when we have (and(P1)(P2)), even if P1 and P2 predicate are False
-
-		the second bool in the tuple is the res
-		"""
-		return False
-
-	def get_sub_predicates(self, pred: str) -> List[str]:
-		positions = argpos(pred)
-		result = []
-		for pos in positions:
-			result.append(pred[pos[0]:pos[1]])
-		return result
-
-	def get_unquoted_arg(self, arg: str) -> str:
-		if arg[0]  == arg[-1] == "'":
-			return arg[1:-1]
-
-		if arg[0] == arg[-1] == "\"":
-			return arg[1:-1]
-		return arg
 
 
 @PredicateEvaluator.register_strat

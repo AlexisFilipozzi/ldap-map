@@ -1,21 +1,24 @@
 import os
 import difflib
 from Classes.Mailer import Mailer
+from typing import List
 
-class Generator:
-	pass
+
+if False:
+    # for forward-reference type-checking:
+    from Classes.Generator import Generator
 
 class CheckStrategy:
-	def handle_file(self, new_file_content: str, generator: Generator, force: bool) -> bool:
+	def handle_file(self, new_file_content: List[str], generator: 'Generator', force: bool) -> bool:
 		# return True if the generated file has been handled (next MapFileStrategy will not be called)
 		return False
 
 
 class DiffCheckerStrategy(CheckStrategy):
-	def get_max_diff(self, generator: Generator):
+	def get_max_diff(self, generator: 'Generator'):
 		return generator.map_conf()['max_diff']
 
-	def handle_file(self, new_file_content: str, generator: Generator, force: bool) -> bool:
+	def handle_file(self, new_file_content: List[str], generator: 'Generator', force: bool) -> bool:
 		if not os.path.isfile(generator.map_conf()["file"]):
 			# the file doesn't exist, there is no diff to check
 			return False

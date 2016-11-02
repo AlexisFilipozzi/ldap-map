@@ -11,9 +11,6 @@ from Classes.Mailer import Mailer
 import re
 import os
 
-# forward declaration
-class Generator:
-	pass
 
 class NoAttributeException(Exception):
 	def __init__(self, map_name: str, template: Any) -> None:
@@ -23,11 +20,11 @@ class Generator:
 	def __init__(self, conf: Dict[str, Any], map_conf: Dict[str, Any]) -> None:
 		self._map_conf = map_conf
 		self._conf = conf
-		self._files_strategies = []
-		self._format_strategies = []
+		self._files_strategies = [] # type: List[CheckStrategy]
+		self._format_strategies = [] # type: List[FormatStrategy]
 
 	@classmethod
-	def create(cls, conf: Dict[str, Any], map_conf: Dict[str, Any]) -> Generator:
+	def create(cls, conf: Dict[str, Any], map_conf: Dict[str, Any]) -> 'Generator':
 		generator = Generator(conf, map_conf)
 		generator.add_format_strategy(DuplicateCheckStrategy()) # no duplicate entries
 		if "check_diff" in map_conf.keys() and map_conf["check_diff"]:
@@ -75,7 +72,7 @@ class Generator:
 			data = ldap_reader.get_list_dict_from_result()
 
 			for entry in data:
-				template_value = {}
+				template_value = {} # type: Dict[str, str]
 				valid = True
 				for flat_dict in Generator.to_flat_dict(entry, request["keys"] if "keys" in request else None):
 					line = self.generate_for_one_entry_to_string(request, flat_dict)
@@ -83,7 +80,7 @@ class Generator:
 						lines.add(line)
 
 		# apply formatter
-		handled_lines = []
+		handled_lines = [] # type: List[str]
 		for line in lines.get():
 			append = True
 			for strat in self._format_strategies:
@@ -93,20 +90,18 @@ class Generator:
 			if append:
 				handled_lines.append(line)
 
-		lines = handled_lines
-
 		# we have generated, now we check
 		force = self._conf["force"]
-		for strat in self._files_strategies:
-			if strat.handle_file(lines, self, force) and not force: # we add and not force as a small security to be able to call all strat handle file (and thus be able to print warning)
+		for f_strat in self._files_strategies:
+			if f_strat.handle_file(handled_lines, self, force) and not force: # we add and not force as a small security to be able to call all strat handle file (and thus be able to print warning)
 				return
 
 		# and we write to the file, if all checks are good
-		self.write_file(lines)
+		self.write_file(handled_lines)
 
 		call([postmap_cmd, self._map_conf["file"]])
 
-	def write_file(self, lines: List[str]) -> any:
+	def write_file(self, lines: List[str]) -> Any:
 		with open(self.path_of_file_to_generate(), "w") as f:
 			for line in lines:
 				f.write(str(line))

@@ -9,10 +9,6 @@ import re
 import getopt
 import os
 
-# forward declaration
-class Program:
-	pass
-
 
 class InvalidConfigurationException(Exception):
 	def __init__(self, filename: str, msg: str) -> None:
@@ -24,7 +20,7 @@ class Program:
 		_initial_path = ""
 
 	@classmethod
-	def create(cls) -> Program:
+	def create(cls) -> 'Program':
 		prog = Program()
 		prog.init()
 
@@ -73,8 +69,8 @@ class Program:
 
 def main(argv: List[str]) -> None:
 	prog = Program.create()
-	optlist = []
-	args = []
+	optlist = [] # type: List[Tuple[str, str]]
+	args = [] # type: List[str]
 	try:
 		optlist, args = getopt.getopt(argv, 'fho:', ["output_dir="])
 	except getopt.GetoptError as err:

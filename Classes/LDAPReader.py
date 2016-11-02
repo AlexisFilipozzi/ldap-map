@@ -1,6 +1,6 @@
-from ldap3 import Server, Connection, ALL, SUBTREE, core, LDAPExceptionError
+from ldap3 import Server, Connection, ALL, SUBTREE, core
 from Classes.Bind import Bind
-from typing import List, Dict
+from typing import List, Dict, Any
 
 class LDAPReaderException(Exception):
 	def __init__(self, err: str) -> None:
@@ -8,12 +8,12 @@ class LDAPReaderException(Exception):
 
 class LDAPReader:
 	def __init__(self, bind: Bind, base_dn: str, query_filter: str, attributes: List[str]) -> None:
-		self._bind = bind
-		self._search_scope = SUBTREE
-		self._query_filter = query_filter
-		self._base_DN = base_dn
-		self._result = []
-		self._attributes = attributes
+		self._bind = bind # type: Bind
+		self._search_scope = SUBTREE # type: Any
+		self._query_filter = query_filter # type: str
+		self._base_DN = base_dn # type: str
+		self._result = [] # type: List[Any]
+		self._attributes = attributes # type: List[str]
 
 	def read(self) -> None:
 		server = Server(self._bind._addr)
@@ -22,14 +22,14 @@ class LDAPReader:
 			conn.bind()
 			conn.search(self._base_DN, self._query_filter, search_scope=self._search_scope, attributes=self._attributes)
 			self._result = conn.entries
-		except LDAPExceptionError as err:
+		except core.exceptions.LDAPException as err:
 			raise LDAPReaderException(err)
 		
 
-	def get_list_dict_from_result(self) -> List[Dict[str, str]]:
-		result = []
+	def get_list_dict_from_result(self) -> List[Dict[str, Any]]:
+		result = [] # type: List[Dict[str, Any]]
 		for entry in self._result:
-			d = {}
+			d = {} # type: Dict[str, Any]
 			try:
 				for attr in self._attributes:
 					d[attr] = entry[attr].value
