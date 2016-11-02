@@ -61,7 +61,7 @@ class Generator:
 				smtp_conf = self._conf["smtp"]
 				mailer = Mailer.get_instance()
 				msg = "LDAP error" + str(err)
-				subject = "Trop de modification dans la génération de table Postfix"
+				subject = "Erreur LDAP"
 				from_who = smtp_conf["sender"]
 				to = smtp_conf["recipient"]
 				smtp = smtp_conf["smtp_server"]
