@@ -6,6 +6,8 @@ bind:
 
 postmap_cmd: /usr/sbin/postmap
 
+output_dir: "../new"
+
 path: # path to echo, mail
   - /usr/sbin/
   - /usr/bin/

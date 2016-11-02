@@ -13,6 +13,9 @@ class Validator:
 		if not "postmap_cmd" in conf:
 			return "postmap command is missing"
 
+		if not "output_dir" in conf:
+			return "output_dir missing"
+
 		if not "map" in conf:
 			return "map attribute is missing"
 		for m in conf["map"]:

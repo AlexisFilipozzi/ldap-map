@@ -13,51 +13,76 @@ class InvalidConfigurationException(Exception):
 
 
 class Program:
-	_initial_path = ""
+	def __init__(self):
+		_initial_path = ""
 
 	@classmethod
-	def init(cls):
-		cls._initial_path = os.environ["PATH"]
+	def create(cls):
+		prog = Program()
+		prog.init()
 
-	@classmethod
-	def run(cls, conf_file, optlist):
+		return prog
+
+	def init(self):
+		self._initial_path = os.environ["PATH"]
+
+	def run(self, conf_file, optlist):
 		conf = None
 		with open(conf_file) as f:
 			conf = yaml.load(f.read())
 		if not conf:
-			return
+			sys.exit(3)
 
-		Program.check_conf(conf, conf_file)
+		conf = self.override_conf(conf, optlist)
+		self.check_conf(conf, conf_file)
 
 		additional_path = conf["path"] if "path" in conf else []
-		os.environ["PATH"] = os.pathsep.join(additional_path)+ os.pathsep + cls._initial_path
+		os.environ["PATH"] = os.pathsep.join(additional_path)+ os.pathsep + self._initial_path
 
 		for map_conf in conf["map"]:
-			generator = Generator.create(conf, map_conf, optlist)
+			generator = Generator.create(conf, map_conf)
 			generator.generate()
 
-	@staticmethod
 	def check_conf(conf, conf_file):
 		msg = Validator.is_conf_valid(conf)
 		if msg != "":
 			raise InvalidConfigurationException(conf_file, msg)
 
+	def override_conf(self, conf, opts):
+		for opt in opts:
+			if opt[0] in ("-o", "--output_dir"):
+				conf["output_dir"] = opt[1]
+
+			if opt[0] in ("-f"):
+				conf["force"] = True
+			else:
+				conf["force"] = False
+		return conf
+
 
 def main(argv):
-	Program.init()
-	optlist, args = getopt.getopt(argv, 'fh')
+	prog = Program.create()
+	optlist = []
+	args = []
+	try:
+		optlist, args = getopt.getopt(argv, 'fho:', ["output_dir="])
+	except getopt.GetoptError as err:
+		print_help()
+		sys.exit(2)
+
 	if ("-h", "") in optlist:
-		self.print_help()
+		print_help()
 		return
 	for arg in args:
-		Program.run(arg, optlist)
+		prog.run(arg, optlist)
 
-def print_help(self):
+def print_help():
 	print("generate_map.py: generate postfix text map using a configuration file\n"
 		  "Options:\n"
 		  "  - f: force to generate\n"
 		  "  - h: display this help\n"
-		  "usage: generate_map.py [-f] [-h] example.conf example-bis.conf\n")
+		  "  - o|output_dir: select output_dir\n"
+		  "usage: generate_map.py [-f] [-h] -o|--output_dir dir example.conf example-bis.conf\n")
 
 
 if __name__ == "__main__":
