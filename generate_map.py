@@ -49,11 +49,17 @@ class Program:
 			raise InvalidConfigurationException(conf_file, msg)
 
 	def overrided_conf(self, conf, opts):
+		# override with opts
 		for opt in opts:
 			if opt[0] in ("-o", "--output_dir"):
 				conf["output_dir"] = opt[1]
 
 			conf["force"] = (opt[0] in ("-f"))
+
+		# add some default values
+		for map_conf in conf["map"]:
+			if 'max_diff' not in map_conf:
+				map_conf['max_diff'] = 20
 
 		return conf
 

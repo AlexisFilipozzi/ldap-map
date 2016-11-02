@@ -2,22 +2,20 @@ import os
 import difflib
 from Classes.Mailer import Mailer
 
+class Generator:
+	pass
 
 class CheckStrategy:
-	def handle_file(self, new_file_content, generator, force):
+	def handle_file(self, new_file_content: str, generator: Generator, force: bool) -> bool:
 		# return True if the generated file has been handled (next MapFileStrategy will not be called)
 		return False
 
 
 class DiffCheckerStrategy(CheckStrategy):
-	def get_max_diff(self, generator):
-		map_conf = generator.map_conf()
-		if 'max_diff' in map_conf:
-			return map_conf['max_diff']
-		else:
-			return 20
+	def get_max_diff(self, generator: Generator):
+		return generator.map_conf()['max_diff']
 
-	def handle_file(self, new_file_content, generator, force):
+	def handle_file(self, new_file_content: str, generator: Generator, force: bool) -> bool:
 		if not os.path.isfile(generator.map_conf()["file"]):
 			# the file doesn't exist, there is no diff to check
 			return False
