@@ -7,22 +7,22 @@ from Classes import TemplateFilter
 from Classes.List import AutoSortList
 from Classes.Mailer import Mailer
 import re
+import os
 
 class NoAttributeException(Exception):
 	def __init__(self, map_name, template):
 		Exception.__init__(self,"No attribute in the current template " + str(template) + " to generate " + str(map_name))
 
 class Generator:
-	def __init__(self, conf, map_conf, optlist):
+	def __init__(self, conf, map_conf):
 		self._map_conf = map_conf
 		self._conf = conf
-		self._optlist = optlist
 		self._files_strategies = []
 		self._format_strategies = []
 
 	@classmethod
-	def create(cls, conf, map_conf, optlist):
-		generator = Generator(conf, map_conf, optlist)
+	def create(cls, conf, map_conf):
+		generator = Generator(conf, map_conf)
 		generator.add_format_strategy(DuplicateCheckStrategy()) # no duplicate entries
 		if "check_diff" in map_conf.keys() and map_conf["check_diff"]:
 			generator.add_check_strategy(DiffCheckerStrategy()) # if we have to check for diff, add this strategy
@@ -30,9 +30,6 @@ class Generator:
 
 	def smtp_conf(self):
 		return self._conf["smtp"] if "smtp" in self._conf.keys() else None
-
-	def opt_list(self):
-		return self._optlist
 
 	def map_conf(self):
 		return self._map_conf
@@ -93,7 +90,7 @@ class Generator:
 		lines = handled_lines
 
 		# we have generated, now we check
-		force = ("-f", "") in self.opt_list()
+		force = self._conf["force"]
 		for strat in self._files_strategies:
 			if strat.handle_file(lines, self, force) and not force: # we add and not force as a small security to be able to call all strat handle file (and thus be able to print warning)
 				return
@@ -104,10 +101,13 @@ class Generator:
 		call([postmap_cmd, self._map_conf["file"]])
 
 	def write_file(self, lines):
-		with open(self._map_conf["file"], "w") as f:
+		with open(self.path_of_file_to_generate(), "w") as f:
 			for line in lines:
 				f.write(str(line))
 			print("file " + str(self._map_conf["file"]) + " has been generated")
+
+	def path_of_file_to_generate(self):
+		return self._conf["output_dir"] + os.path.sep + self._map_conf["file"]
 
 	def generate_for_one_entry_to_string(self, request, template_value):
 		# we first verify that we have to add this line

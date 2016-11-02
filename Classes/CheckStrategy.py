@@ -27,7 +27,7 @@ class DiffCheckerStrategy(CheckStrategy):
 			# even when there is too much diff we generate the file, so there is no need to check
 			return False
 
-		with open(generator.map_conf()["file"]) as f:
+		with open(generator.path_of_file_to_generate()) as f:
 			old_lines = f.readlines()
 			diff = difflib.Differ().compare(new_file_content, old_lines)
 			nb_diff = 0

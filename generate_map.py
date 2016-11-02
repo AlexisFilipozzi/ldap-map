@@ -33,7 +33,7 @@ class Program:
 		if not conf:
 			sys.exit(3)
 
-		conf = self.override_conf(conf, optlist)
+		conf = self.overrided_conf(conf, optlist)
 		self.check_conf(conf, conf_file)
 
 		additional_path = conf["path"] if "path" in conf else []
@@ -43,20 +43,18 @@ class Program:
 			generator = Generator.create(conf, map_conf)
 			generator.generate()
 
-	def check_conf(conf, conf_file):
+	def check_conf(self, conf, conf_file):
 		msg = Validator.is_conf_valid(conf)
 		if msg != "":
 			raise InvalidConfigurationException(conf_file, msg)
 
-	def override_conf(self, conf, opts):
+	def overrided_conf(self, conf, opts):
 		for opt in opts:
 			if opt[0] in ("-o", "--output_dir"):
 				conf["output_dir"] = opt[1]
 
-			if opt[0] in ("-f"):
-				conf["force"] = True
-			else:
-				conf["force"] = False
+			conf["force"] = (opt[0] in ("-f"))
+
 		return conf
 
 
