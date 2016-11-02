@@ -222,33 +222,3 @@ class EqualEvaluationStrategy(EvaluationStrategy):
 						return True, evaluation_result
 			return True, evaluation_result
 		return False, evaluation_result
-
-
-if __name__=="__main__":
-	def test(dict):
-		success_count = 0
-		for (key, val) in dict.items():
-			print("Test \"" + key + "\": ", end="")
-			evaluator = PredicateEvaluator(key)
-			if evaluator.eval_predicate() == val:
-				success_count += 1
-				print("success")
-			else:
-				print("FAIL")
-
-		print("Nb of tests: " + str(len(dict)) + ", success: " + str(success_count) + ", fail: " + str(len(dict) - success_count))
-
-	tests = {
-		"contains(aaa, 'aa')": True,
-		"contains(aaa, 'b b')": False,
-		"not_p(contains(aaa, b))": True,
-		"or_l(contains(aaa, a), contains(aaa, b))": True,
-		"or_l(contains(aaa, b), contains(aaa, a))": True,
-		"or_l(contains(aaa, c), contains(aaa, b))": False,
-		"and_l(contains(aba, ba), contains(aba, a))": True,
-		"and_l(contains(aba, ba), contains(aba, c))": False,
-		"equals(aaa, aaa)": True,
-		"equals(aaa, aa)": False,
-		"contains('testuser@example.com', '@example.com')": True,
-	}
-	test(tests)

@@ -101,20 +101,3 @@ class ToUpperCaseFilter(TemplateFilter):
 	def apply_filter(self, string: str) -> str:
 		return string.upper()
 
-
-def test(dictio):
-	engine = Engine()
-	for val, key in dictio.items():
-		print("Test " + str(key[0]) + " -> " + str(val) + ": ", end="")
-		if engine.apply(key[0], key[1]) == val:
-			print("success")
-		else:
-			print("FAIL")
-
-if __name__=="__main__":
-	test({
-			"test": ["{{val}}", {"val": "test"}],
-			"test": ["{{val || lower}}", {"val": "TEST"}],
-			"TEST": ["{{val || upper}}", {"val": "Test"}],
-			"TEST": ["{{val || lower || upper}}", {"val": "Test"}],
-		})

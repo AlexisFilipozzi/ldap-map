@@ -40,25 +40,3 @@ class AutoSortList:
 		if enabled and not self._enabled:
 			self._sort()
 		self._enabled = enabled
-
-
-if __name__=="__main__":
-	l = AutoSortList()
-	l.add(0)
-	l.add(2)
-	l.add(5)
-	l.add(1)
-	l.add(3)
-	l.add(4)
-	print(l.get())
-
-	ll = AutoSortList(False)
-	ll.add(2)
-	ll.add(0)
-	ll.add(1)
-	print(ll.get())
-	ll.set_enabled(True)
-	print(ll.get())
-
-
-
