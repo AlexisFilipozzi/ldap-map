@@ -1,26 +1,28 @@
+from typing import Any, List
+
 class Comparator:
-	def is_greater_than(self, a, b):
+	def is_greater_than(self, a: Any, b: Any) -> bool:
 		return a>b
 
 
 class AutoSortList:
-	def __init__(self, enabled=True, comparator=Comparator()):
+	def __init__(self, enabled: bool=True, comparator: Comparator=Comparator()) -> None:
 		self._sorted = []
 		self._not_sorted = []
 		self._comparator = comparator
 		self._enabled = enabled
 
-	def get(self):
+	def get(self) -> List[Any]:
 		if self._enabled:
 			self._sort()
 			return self._sorted
 		else:
 			return self._sorted + self._not_sorted
 
-	def add(self, item):
+	def add(self, item: Any) -> None:
 		self._not_sorted.append(item)
 
-	def _sort(self):
+	def _sort(self) -> None:
 		self._not_sorted.sort()
 		to_add_list = self._not_sorted
 		self._not_sorted = []
@@ -34,7 +36,7 @@ class AutoSortList:
 
 		
 
-	def set_enabled(self, enabled):
+	def set_enabled(self, enabled: bool) -> None:
 		if enabled and not self._enabled:
 			self._sort()
 		self._enabled = enabled

@@ -1,32 +1,39 @@
 from Classes.Conf import Validator
 from Classes.Generator import Generator
 
+from typing import List, Tuple, Any, Dict
+
 import yaml
 import sys
 import re
 import getopt
 import os
 
+# forward declaration
+class Program:
+	pass
+
+
 class InvalidConfigurationException(Exception):
-	def __init__(self, filename, msg):
+	def __init__(self, filename: str, msg: str) -> None:
 		Exception.__init__(self,"Invalid configuration file " + str(filename) + "\n" + msg)
 
 
 class Program:
-	def __init__(self):
+	def __init__(self) -> None:
 		_initial_path = ""
 
 	@classmethod
-	def create(cls):
+	def create(cls) -> Program:
 		prog = Program()
 		prog.init()
 
 		return prog
 
-	def init(self):
+	def init(self) -> None:
 		self._initial_path = os.environ["PATH"]
 
-	def run(self, conf_file, optlist):
+	def run(self, conf_file: str, optlist: List[Tuple[str, str]]) -> None:
 		conf = None
 		with open(conf_file) as f:
 			conf = yaml.load(f.read())
@@ -43,12 +50,12 @@ class Program:
 			generator = Generator.create(conf, map_conf)
 			generator.generate()
 
-	def check_conf(self, conf, conf_file):
+	def check_conf(self, conf: Dict[str, Any], conf_file: str) -> None:
 		msg = Validator.is_conf_valid(conf)
 		if msg != "":
 			raise InvalidConfigurationException(conf_file, msg)
 
-	def overrided_conf(self, conf, opts):
+	def overrided_conf(self, conf: Dict[str, Any], opts: List[Tuple[str, str]]) -> Dict[str, Any]:
 		# override with opts
 		for opt in opts:
 			if opt[0] in ("-o", "--output_dir"):
@@ -64,7 +71,7 @@ class Program:
 		return conf
 
 
-def main(argv):
+def main(argv: List[str]) -> None:
 	prog = Program.create()
 	optlist = []
 	args = []
@@ -80,7 +87,7 @@ def main(argv):
 	for arg in args:
 		prog.run(arg, optlist)
 
-def print_help():
+def print_help() -> None:
 	print("generate_map.py: generate postfix text map using a configuration file\n"
 		  "Options:\n"
 		  "  - f: force to generate\n"

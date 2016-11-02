@@ -1,46 +1,52 @@
 from subprocess import call
+from typing import Any, Dict, List
+from typing import Generator as typingGen
 from Classes.LDAPReader import LDAPReader, LDAPReaderException
 from Classes.PredicateEvaluator import PredicateEvaluator
-from Classes.CheckStrategy import DiffCheckerStrategy
-from Classes.FormatStrategy import DuplicateCheckStrategy, NoEmptyCheckStrategy
+from Classes.CheckStrategy import CheckStrategy, DiffCheckerStrategy
+from Classes.FormatStrategy import FormatStrategy, DuplicateCheckStrategy, NoEmptyCheckStrategy
 from Classes import TemplateFilter
 from Classes.List import AutoSortList
 from Classes.Mailer import Mailer
 import re
 import os
 
+# forward declaration
+class Generator:
+	pass
+
 class NoAttributeException(Exception):
-	def __init__(self, map_name, template):
+	def __init__(self, map_name: str, template: Any) -> None:
 		Exception.__init__(self,"No attribute in the current template " + str(template) + " to generate " + str(map_name))
 
 class Generator:
-	def __init__(self, conf, map_conf):
+	def __init__(self, conf: Dict[str, Any], map_conf: Dict[str, Any]) -> None:
 		self._map_conf = map_conf
 		self._conf = conf
 		self._files_strategies = []
 		self._format_strategies = []
 
 	@classmethod
-	def create(cls, conf, map_conf):
+	def create(cls, conf: Dict[str, Any], map_conf: Dict[str, Any]) -> Generator:
 		generator = Generator(conf, map_conf)
 		generator.add_format_strategy(DuplicateCheckStrategy()) # no duplicate entries
 		if "check_diff" in map_conf.keys() and map_conf["check_diff"]:
 			generator.add_check_strategy(DiffCheckerStrategy()) # if we have to check for diff, add this strategy
 		return generator
 
-	def smtp_conf(self):
+	def smtp_conf(self)-> Dict[str, Any]:
 		return self._conf["smtp"] if "smtp" in self._conf.keys() else None
 
-	def map_conf(self):
+	def map_conf(self) -> Dict[str, Any]:
 		return self._map_conf
 
-	def add_check_strategy(self, strat):
+	def add_check_strategy(self, strat: CheckStrategy) -> None:
 		self._files_strategies.append(strat)
 
-	def add_format_strategy(self, strat):
+	def add_format_strategy(self, strat: FormatStrategy) -> None:
 		self._format_strategies.append(strat)
 
-	def generate(self):
+	def generate(self) -> None:
 		sort_enabled = True if "sorted" not in self._map_conf else self._map_conf["sorted"]
 		lines = AutoSortList(sort_enabled)
 		postmap_cmd = self._conf["postmap_cmd"]
@@ -100,16 +106,16 @@ class Generator:
 
 		call([postmap_cmd, self._map_conf["file"]])
 
-	def write_file(self, lines):
+	def write_file(self, lines: List[str]) -> any:
 		with open(self.path_of_file_to_generate(), "w") as f:
 			for line in lines:
 				f.write(str(line))
 			print("file " + str(self._map_conf["file"]) + " has been generated")
 
-	def path_of_file_to_generate(self):
+	def path_of_file_to_generate(self) -> str:
 		return self._conf["output_dir"] + os.path.sep + self._map_conf["file"]
 
-	def generate_for_one_entry_to_string(self, request, template_value):
+	def generate_for_one_entry_to_string(self, request: Dict[str, Any], template_value: Dict[str, str]) -> str:
 		# we first verify that we have to add this line
 		append = True
 
@@ -140,11 +146,11 @@ class Generator:
 		return None
 
 	@staticmethod
-	def attribute_from_template_string(template_string):
+	def attribute_from_template_string(template_string: str) -> List[str]:
 		return re.findall(TemplateFilter.Engine.var_filter_string_regex, template_string)
 
 	@staticmethod
-	def to_flat_dict(d, key_to_flat):
+	def to_flat_dict(d, key_to_flat) -> typingGen[Dict[str, str], str, None]:
 		# generator:
 		# if the input dict has a list value and the corresponding key is in key_to_list,
 		# we return a generator on which we can iterate to get all possible dict where 

@@ -1,6 +1,8 @@
+from typing import Dict, Any
+
 class Validator:
 	@staticmethod
-	def is_conf_valid(conf):
+	def is_conf_valid(conf: Dict[str, Any]) -> str:
 		if not "bind" in conf:
 			return "bind is missing"
 		if not "name" in conf["bind"]:
@@ -35,7 +37,7 @@ class Validator:
 
 
 	@staticmethod
-	def is_map_conf_valid(map_conf):
+	def is_map_conf_valid(map_conf: Any) -> str:
 		if not "file" in map_conf:
 			return "map file name is missing"
 		filename = str(map_conf["file"])
@@ -48,7 +50,7 @@ class Validator:
 		return ""
 
 	@staticmethod
-	def is_request_conf_valid(request_conf):
+	def is_request_conf_valid(request_conf: Any) -> str:
 		if not "filter" in request_conf:
 			return "request filter is missing"
 		if not "key_template" in request_conf:

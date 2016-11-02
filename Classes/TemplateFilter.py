@@ -1,12 +1,19 @@
 import re
 
+from typing import Dict
+
+# forward declaration
+class TemplateFilter:
+	pass
+
+
 class InvalidFilterException(Exception):
-	def __init__(self, filt):
+	def __init__(self, filt: str) -> None:
 		Exception.__init__(self, str(filt) + " is not a valid filter")
 
 
 class NoSuchFilterException(Exception):
-	def __init__(self, filter_name):
+	def __init__(self, filter_name: str) -> None:
 		Exception.__init__(self, "No such filter " + str(filter_name))
 
 class Engine:
@@ -18,19 +25,19 @@ class Engine:
 	var_filter_string_regex = r"\{{2}\s*(\w+)\s*(?:\||\}){2}"
 
 	@classmethod
-	def add_filter(cls, filt):
+	def add_filter(cls, filt: TemplateFilter) -> None:
 		if not filt in cls._filters:
 			cls._filters.append(filt)
 
 	@classmethod
-	def register_filter(cls, filt):
+	def register_filter(cls, filt: TemplateFilter) -> None:
 		"""
 		decorator to register filters
 		"""
 		cls.add_filter(filt)
 		return cls
 
-	def apply(self, template_string, values):
+	def apply(self, template_string: str, values: Dict[str, str]) -> str:
 		res = template_string
 		template_matchs = re.findall(self.template_filter_string_regex, template_string)
 		for match in template_matchs:
@@ -50,16 +57,16 @@ class Engine:
 
 		return res
 
-	def is_valid_template_string(self, str):
+	def is_valid_template_string(self, str: str) -> bool:
 		return re.match(self.valid_template_filter_string_regex, str) is not None	
 
-	def _apply_filters(self, string_to_filter, filters):
+	def _apply_filters(self, string_to_filter: str, filters: TemplateFilter) -> str:
 		res = string_to_filter
 		for filt in filters:
 			res = self._apply_filter(res, filt)
 		return res
 
-	def _apply_filter(self, string_to_filter, filter_name):
+	def _apply_filter(self, string_to_filter: str, filter_name: str) -> str:
 		for f in self._filters:
 			if f.is_filter(filter_name):
 				return f.apply_filter(string_to_filter)
@@ -67,13 +74,13 @@ class Engine:
 
 
 class TemplateFilter:
-	def is_filter(name):
+	def is_filter(name: str) -> bool:
 		"""
 		return True when name is the name of the filter
 		"""
 		return False
 
-	def apply_filter(string):
+	def apply_filter(string: str) -> str:
 		"""
 		apply the filter on the string string
 		"""
@@ -82,19 +89,19 @@ class TemplateFilter:
 
 @Engine.register_filter
 class ToLowerCaseFilter(TemplateFilter):
-	def is_filter(name):
+	def is_filter(name: str) -> bool:
 		return name in [ "lower_case", "lower" ]
 
-	def apply_filter(string):
+	def apply_filter(string: str) -> str:
 		return string.lower()
 
 
 @Engine.register_filter
 class ToUpperCaseFilter(TemplateFilter):
-	def is_filter(name):
+	def is_filter(name: str) -> bool:
 		return name in [ "upper_case", "upper" ]
 
-	def apply_filter(string):
+	def apply_filter(string: str) -> str:
 		return string.upper()
 
 
