@@ -1,5 +1,10 @@
 import re
 import ast
+from typing import Any, List, Tuple
+
+# forward declaration
+class EvaluationStrategy:
+	pass
 
 def collect_offsets(call_string):
 	def _abs_offset(lineno, col_offset):
@@ -67,27 +72,23 @@ class InvalidPredicateException(Exception):
 class PredicateEvaluator:
 	_strategies = []
 
-	class PredicateValue:
-		def __init__(self):
-			self._eval = False
-
-	def __init__(self, predicate):
+	def __init__(self, predicate: str) -> None:
 		self._predicate = predicate
 
-	def eval_predicate(self):
+	def eval_predicate(self) -> bool:
 		assert(self._strategies)
 		for strategy in self._strategies:
-			result = PredicateEvaluator.PredicateValue()
 			strat_instance = strategy()
-			if strat_instance.eval(self._predicate, result):
+			match, result = strat_instance.eval(self._predicate)
+			if match:
 				# the current strategy has parsed the predicate
 				# no other strategy can parse this predicate
 				# so the result is the on given by this strategy
-				return result._eval
+				return result
 		raise InvalidPredicateException(self._predicate)
 
 	@classmethod
-	def register_strat(cls, strat):
+	def register_strat(cls, strat: EvaluationStrategy) -> Any:
 		"""
 		decorator to register EvaluationStrategy
 		"""
@@ -97,26 +98,23 @@ class PredicateEvaluator:
 
 
 class EvaluationStrategy:
-	def eval(self, predicate, evaluation_result):
+	def eval(self, predicate: str) -> Tuple[bool, bool]:
 		"""
-		return True if there have been a match, for instance we always return 
+		return Tuple with first value to True if there have been a match, for instance we always return 
 		True when we have (and(P1)(P2)), even if P1 and P2 predicate are False
 
-		evaluation_result is the result of the evaluation, in the case above, it's 
-		True only when P1 and P2 are true
+		the second bool in the tuple is the res
 		"""
 		return False
 
-	@staticmethod
-	def get_sub_predicates(pred):
+	def get_sub_predicates(self, pred: str) -> List[str]:
 		positions = argpos(pred)
 		result = []
 		for pos in positions:
 			result.append(pred[pos[0]:pos[1]])
 		return result
 
-	@staticmethod
-	def get_unquoted_arg(arg):
+	def get_unquoted_arg(self, arg: str) -> str:
 		if arg[0]  == arg[-1] == "'":
 			return arg[1:-1]
 
@@ -127,101 +125,106 @@ class EvaluationStrategy:
 
 @PredicateEvaluator.register_strat
 class AndEvaluationStrategy(EvaluationStrategy):
-	def eval(self, predicate, evaluation_result):
+	def eval(self, predicate: str) -> Tuple[bool, bool]:
+		evaluation_result = False
 		outer_match = re.findall(r"^and_l\((.+)\)$", predicate)
 		if outer_match:
 			inners_predicate = self.get_sub_predicates(predicate)
 			if inners_predicate:
-				evaluation_result._eval = True
+				evaluation_result = True
 				for pred in inners_predicate:
 					evaluator = PredicateEvaluator(pred)
 					if not evaluator.eval_predicate():
-						evaluation_result._eval = False
+						evaluation_result = False
 						# we don't need to go further
-						return True
-			return True
-		return False
+						return True, evaluation_result
+			return True, evaluation_result
+		return False, evaluation_result
 
 
 @PredicateEvaluator.register_strat
 class OrEvaluationStrategy(EvaluationStrategy):
-	def eval(self, predicate, evaluation_result):
+	def eval(self, predicate: str) -> Tuple[bool, bool]:
+		evaluation_result = False
 		outer_match = re.findall(r"^or_l\((.+)\)$", predicate)
 		if outer_match:
 			inners_predicate = self.get_sub_predicates(predicate)
 			if inners_predicate:
-				evaluation_result._eval = False
+				evaluation_result = False
 				for pred in inners_predicate:
 					evaluator = PredicateEvaluator(pred)
 					if evaluator.eval_predicate():
-						evaluation_result._eval = True
+						evaluation_result = True
 						# we don't need to go further
-						return True
-			return True
-		return False
+						return True, evaluation_result
+			return True, evaluation_result
+		return False, evaluation_result
 
 
 @PredicateEvaluator.register_strat
 class NotEvaluationStrategy(EvaluationStrategy):
-	def eval(self, predicate, evaluation_result):
+	def eval(self, predicate: str) -> Tuple[bool, bool]:
+		evaluation_result = False
 		outer_match = re.findall(r"^not_p\((.+)\)$", predicate)
 		if outer_match:
 			inner = outer_match[0]
 			evaluator = PredicateEvaluator(inner)
-			evaluation_result._eval = (not evaluator.eval_predicate())
-			return True
-		return False
+			evaluation_result = (not evaluator.eval_predicate())
+			return True, evaluation_result
+		return False, evaluation_result
 
 
 @PredicateEvaluator.register_strat
 class ContainEvaluationStrategy(EvaluationStrategy):
-	def eval(self, predicate, evaluation_result):
+	def eval(self, predicate: str) -> Tuple[bool, bool]:
 		"""
 			the predicate is :
 			contains(s, s0, s1, ...), it is true if s contains s0, s1, ...
 			false otherwise
 		"""
+		evaluation_result = False
 		outer_match = re.findall(r"^contains\((.+)\)$", predicate)
 		if outer_match:
 			inner = outer_match[0]
 			args = self.get_sub_predicates(predicate)
 			if len(args) >= 2:
-				evaluation_result._eval = True
+				evaluation_result = True
 				for sub_str in args[1:]:
 					unquoted_sub_str = self.get_unquoted_arg(sub_str)
 					unq_str = self.get_unquoted_arg(args[0])
 					if unquoted_sub_str not in unq_str:
-						evaluation_result._eval = False
+						evaluation_result = False
 						# the string doesn't contains one of the other argument
 						# we don't need to go further
-						return True
-			return True
-		return False
+						return True, evaluation_result
+			return True, evaluation_result
+		return False, evaluation_result
 
 
 @PredicateEvaluator.register_strat
 class EqualEvaluationStrategy(EvaluationStrategy):
-	def eval(self, predicate, evaluation_result):
+	def eval(self, predicate: str) -> Tuple[bool, bool]:
 		"""
 			the predicate is :
 			equal(s, s0, s1, ...), it is true if s equal to s0 and  s1 and ...
 			false otherwise
 		"""
+		evaluation_result = False
 		outer_match = re.findall(r"^equals\((.+)\)$", predicate)
 		if outer_match:
 			inner = outer_match[0]
 			args = self.get_sub_predicates(predicate)
 			if len(args) >= 2:
-				evaluation_result._eval = True
+				evaluation_result = True
 				for sub_str in args[1:]:
 					unquoted_sub_str = self.get_unquoted_arg(sub_str)
 					unq_str = self.get_unquoted_arg(args[0])
 					if unquoted_sub_str != unq_str:
-						evaluation_result._eval = False
+						evaluation_result = False
 						# we don't need to go further
-						return True
-			return True
-		return False
+						return True, evaluation_result
+			return True, evaluation_result
+		return False, evaluation_result
 
 
 if __name__=="__main__":
