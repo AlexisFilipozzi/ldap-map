@@ -99,7 +99,7 @@ class Generator:
 		# and we write to the file, if all checks are good
 		self.write_file(handled_lines)
 
-		call([postmap_cmd, self._map_conf["file"]])
+		call([postmap_cmd, self.path_of_file_to_generate()])
 
 	def write_file(self, lines: List[str]) -> Any:
 		with open(self.path_of_file_to_generate(), "w") as f:
