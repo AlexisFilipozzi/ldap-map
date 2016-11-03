@@ -52,12 +52,16 @@ class Program:
 			raise InvalidConfigurationException(conf_file, msg)
 
 	def overrided_conf(self, conf: Dict[str, Any], opts: List[Tuple[str, str]]) -> Dict[str, Any]:
+		# default value
+		conf["force"] = False
+
 		# override with opts
 		for opt in opts:
 			if opt[0] in ("-o", "--output_dir"):
 				conf["output_dir"] = opt[1]
 
-			conf["force"] = (opt[0] in ("-f"))
+			if opt[0] in ("-f"):
+				conf["force"] = True
 
 		# add some default values
 		for map_conf in conf["map"]:
