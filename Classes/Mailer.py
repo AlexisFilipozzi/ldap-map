@@ -54,7 +54,7 @@ class Mailer:
 @Mailer.register_strat
 class SmtpLibStrat(MailingStrategy):
 	def send_mesage(self) -> bool:
-		msg = MIMEText(self._message)
+		msg = MIMEText(self._message, 'plain', 'UTF-8')
 		msg['Subject'] = self._title
 		msg['From'] = self._from
 		msg['To'] = ",".join(self._to)
@@ -78,7 +78,7 @@ class CLIMailingStrat(MailingStrategy):
 	This strat should alwas be the last one to use
 	"""
 	def send_message(self)-> bool:
-		mail_cmd = "echo \"" + self._message + "\" | mail -s \"" + self._title + "\" " + " ".join(self._to)
+		mail_cmd = "echo -e \"MIME-Version: 1.0\nContent-Type: text/plain; charset=utf-8\n\n" + self._message + "\" | mail -s \"" + self._title + "\" " + " ".join(self._to)
 		ret = os.system(mail_cmd)
 		if ret != 0:
 			print("Error while sending mail with mail in CLI")
