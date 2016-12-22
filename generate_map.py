@@ -1,6 +1,6 @@
 from Classes.Conf import Validator
 from Classes.Generator import Generator
-
+from pid.decorator import pidfile
 from typing import List, Tuple, Any, Dict
 
 import yaml
@@ -70,7 +70,7 @@ class Program:
 
 		return conf
 
-
+@pidfile()
 def main(argv: List[str]) -> None:
 	prog = Program.create()
 	optlist = [] # type: List[Tuple[str, str]]

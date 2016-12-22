@@ -2,3 +2,4 @@ ldap3
 PyYAML
 typing
 mypy-lang
+pid
